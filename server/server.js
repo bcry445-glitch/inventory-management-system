@@ -17,6 +17,10 @@ app.use(cors({
     credentials: true
 }));
 
+// Route Files
+const auth = require('./routes/authRoutes');
+app.use('/api/auth', auth);
+
 // Basic API Health Route
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'success', message: 'API is running perfectly' });
