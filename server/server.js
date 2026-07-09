@@ -19,10 +19,14 @@ app.use(cors({
 
 // Route Files
 const auth = require('./routes/authRoutes');
-const orders = require('./routes/orderRoutes'); // Add this line
+const orders = require('./routes/orderRoutes');
+const products = require('./routes/productRoutes');   // Add this
+const dashboard = require('./routes/dashboardRoutes'); // Add this
 
 app.use('/api/auth', auth);
-app.use('/api/orders', orders); // Add this line
+app.use('/api/orders', orders);
+app.use('/api/products', products);     // Add this
+app.use('/api/dashboard', dashboard);   // Add this
 
 // Basic API Health Route
 app.get('/api/health', (req, res) => {
