@@ -1,0 +1,29 @@
+name: Enterprise Backend CI/CD
+
+# Trigger this workflow every time you push to the main branch
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest # This uses GitHub's flawless Linux servers!
+
+    steps:
+      # 1. Grab your code from the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Boot up Docker Compose on the cloud server
+      - name: Start Docker Environment
+        run: docker compose up -d --build
+
+      # 3. Verify the containers are running successfully
+      - name: Check Container Status
+        run: docker ps -a
+
+      # 4. View the logs to prove MongoDB and Node connected
+      - name: Display Backend Logs
+        run: docker compose logs api
