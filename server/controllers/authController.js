@@ -1,85 +1,89 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
-// Helper Function: Generate JWT and send it securely via HttpOnly Cookie
-const sendTokenResponse = (user, statusCode, res) => {
-    // 1. Create the token with the user ID and Role payload
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-        expiresIn: '30d' // Token expires in 30 days
-    });
-
-    // 2. Configure cookie options
-    const options = {
-        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        httpOnly: true, // Viva Prep: This prevents Cross-Site Scripting (XSS) attacks
-        secure: process.env.NODE_ENV === 'production' 
-    };
-
-    // 3. Send response
-    res.status(statusCode).cookie('token', token, options).json({
-        success: true,
-        token,
-        user: { id: user._id, name: user.name, email: user.email, role: user.role }
+// Helper function to generate JWT token
+const generateToken = (id) => {
+    return jwt.sign({ id }, process.env.JWT_SECRET || 'allied_internship_super_secret_key_2026', {
+        expiresIn: '30d',
     });
 };
 
 // @desc    Register user
 // @route   POST /api/auth/register
-exports.register = async (req, res) => {
+// @access  Public
+// === THE FIX IS HERE: Added 'next' to the parameter list ===
+exports.register = async (req, res, next) => {
     try {
         const { name, email, password, role } = req.body;
 
         // Check if user already exists
         const userExists = await User.findOne({ email });
         if (userExists) {
-            return res.status(400).json({ success: false, message: 'Email already registered' });
+            return res.status(400).json({ success: false, message: 'User already exists' });
         }
 
-        // Create the user (password hashing happens automatically in the User model)
-        const user = await User.create({ name, email, password, role });
+        // Create user in database
+        const user = await User.create({
+            name,
+            email,
+            password,
+            role
+        });
 
-        sendTokenResponse(user, 201, res);
+        // Send token response
+        res.status(201).json({
+            success: true,
+            token: generateToken(user._id),
+            data: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
+        });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        next(error); // This now works without crashing!
     }
 };
 
 // @desc    Login user
 // @route   POST /api/auth/login
-exports.login = async (req, res) => {
+// @access  Public
+// === THE FIX IS HERE: Added 'next' to the parameter list ===
+exports.login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
-        // Validate email & password inputs
         if (!email || !password) {
-            return res.status(400).json({ success: false, message: 'Please provide email and password' });
+            return res.status(400).json({ success: false, message: 'Please provide an email and password' });
         }
 
-        // Check for user and explicitly select the password field (since we set select: false in the model)
+        // Find user and explicitly select the password field we hid earlier
         const user = await User.findOne({ email }).select('+password');
+
         if (!user) {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
 
-        // Check if password matches using our custom model method
+        // Check if password matches
         const isMatch = await user.matchPassword(password);
+
         if (!isMatch) {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
 
-        sendTokenResponse(user, 200, res);
+        // Send token response
+        res.status(200).json({
+            success: true,
+            token: generateToken(user._id),
+            data: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
+        });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        next(error); // This now works without crashing!
     }
-};
-
-// @desc    Log user out / clear cookie
-// @route   GET /api/auth/logout
-exports.logout = (req, res) => {
-    res.cookie('token', 'none', {
-        expires: new Date(Date.now() + 10 * 1000), // Expires in 10 seconds
-        httpOnly: true
-    });
-
-    res.status(200).json({ success: true, data: {} });
 };

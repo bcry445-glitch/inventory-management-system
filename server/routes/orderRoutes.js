@@ -1,11 +1,9 @@
 const express = require('express');
-const { createOrder } = require('../controllers/orderController');
-const { protect, authorize } = require('../middleware/authMiddleware');
-
 const router = express.Router();
+const { createOrder, getOrders } = require('../controllers/orderController');
+const { protect } = require('../middleware/authMiddleware');
 
-// Route: POST /api/orders
-// Security: Must be logged in (protect). 
 router.post('/', protect, createOrder);
+router.get('/', protect, getOrders);
 
 module.exports = router;

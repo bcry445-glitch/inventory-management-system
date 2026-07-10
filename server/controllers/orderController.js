@@ -1,59 +1,38 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 
-// @desc    Create a new order and update inventory
-// @route   POST /api/orders
-// @access  Protected (Employee, Manager, Admin)
 exports.createOrder = async (req, res) => {
     try {
         const { customerName, customerEmail, orderedProducts } = req.body;
+        let totalAmount = 0;
 
-        if (!orderedProducts || orderedProducts.length === 0) {
-            return res.status(400).json({ success: false, message: 'No products in the order' });
-        }
-
-        let calculatedTotal = 0;
-        
-        // 1. Loop through requested products to calculate total and check stock
-        for (const item of orderedProducts) {
-            const dbProduct = await Product.findById(item.product);
-            
-            if (!dbProduct) {
-                return res.status(404).json({ success: false, message: `Product not found: ${item.product}` });
+        // Check stock and calculate total
+        for (let item of orderedProducts) {
+            const product = await Product.findById(item.productId);
+            if (!product || product.quantity < item.quantity) {
+                return res.status(400).json({ success: false, message: `Insufficient stock for ${product.name}` });
             }
-
-            // Rubric Requirement: Prevent ordering if stock is unavailable
-            if (dbProduct.quantity < item.quantity) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: `Insufficient stock for ${dbProduct.name}. Available: ${dbProduct.quantity}, Requested: ${item.quantity}` 
-                });
-            }
-
-            // Rubric Requirement: Automatically calculate Total Bill
-            calculatedTotal += (dbProduct.sellingPrice * item.quantity);
+            totalAmount += product.sellingPrice * item.quantity;
         }
 
-        // 2. If all stock checks pass, create the order
-        const order = await Order.create({
-            customerName,
-            customerEmail,
-            orderedProducts,
-            totalAmount: calculatedTotal
-        });
+        // Place order
+        const order = await Order.create({ customerName, customerEmail, orderedProducts, totalAmount });
 
-        // 3. Rubric Requirement: Inventory auto-update after order placement
-        for (const item of orderedProducts) {
-            const dbProduct = await Product.findById(item.product);
-            dbProduct.quantity -= item.quantity;
-            await dbProduct.save();
+        // Update Inventory (Auto-update after order placement) 
+        for (let item of orderedProducts) {
+            await Product.findByIdAndUpdate(item.productId, { $inc: { quantity: -item.quantity } });
         }
 
-        res.status(201).json({
-            success: true,
-            data: order
-        });
+        res.status(201).json({ success: true, data: order });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
 
+exports.getOrders = async (req, res) => {
+    try {
+        const orders = await Order.find().populate('orderedProducts.productId');
+        res.status(200).json({ success: true, data: orders });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

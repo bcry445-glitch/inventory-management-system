@@ -1,12 +1,23 @@
 const express = require('express');
-const { createProduct, getProducts } = require('../controllers/productController');
-const { protect, authorize } = require('../middleware/authMiddleware');
-
 const router = express.Router();
 
-// Only Admins and Managers can create products. Anyone logged in can view them.
-router.route('/')
-    .get(protect, getProducts)
-    .post(protect, authorize('Admin', 'Manager'), createProduct);
+// Import the perfectly clean controller we just made
+const { 
+    createProduct, 
+    getProducts, 
+    getProductById, 
+    updateProduct, 
+    deleteProduct 
+} = require('../controllers/productController');
+
+// Import the security middleware
+const { protect } = require('../middleware/authMiddleware');
+
+// Apply the 'protect' middleware to all routes
+router.post('/', protect, createProduct);
+router.get('/', protect, getProducts);
+router.get('/:id', protect, getProductById);
+router.put('/:id', protect, updateProduct);
+router.delete('/:id', protect, deleteProduct);
 
 module.exports = router;

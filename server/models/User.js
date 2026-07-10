@@ -4,44 +4,43 @@ const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: [true, 'Please provide a name']
+        required: [true, 'Please add a name']
     },
     email: {
         type: String,
-        required: [true, 'Please provide an email'],
+        required: [true, 'Please add an email'],
         unique: true,
         match: [
             /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-            'Please provide a valid email'
+            'Please add a valid email'
         ]
     },
     password: {
         type: String,
-        required: [true, 'Please provide a password'],
+        required: [true, 'Please add a password'],
         minlength: 6,
-        select: false // This ensures the password isn't accidentally sent back in API responses
+        select: false 
     },
     role: {
         type: String,
         enum: ['Admin', 'Manager', 'Employee'],
-        default: 'Employee' // Default role for new signups
+        default: 'Employee'
     }
 }, { timestamps: true });
 
-// Viva Defense Prep: Mongoose Middleware to hash the password BEFORE saving it
-userSchema.pre('save', async function(next) {
-    // If the password hasn't been modified, skip hashing
+// Modern, async pre-save hook (No 'next' required!)
+userSchema.pre('save', async function() {
+    // If the password hasn't been changed, just return and move on
     if (!this.isModified('password')) {
-        return next();
+        return; 
     }
     
-    // Generate a secure salt and hash the password
+    // Hash the password
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
-    next();
 });
 
-// Viva Defense Prep: Helper method to compare passwords during login
+// Method to match user entered password to hashed password in database
 userSchema.methods.matchPassword = async function(enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };

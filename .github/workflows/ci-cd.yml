@@ -1,29 +1,37 @@
-name: Enterprise Backend CI/CD
+name: Enterprise MERN Pipeline
 
-# Trigger this workflow every time you push to the main branch
 on:
   push:
-    branches: ["main", "master"]
+    branches: ["main", "development", "release-v1.0"]
   pull_request:
-    branches: ["main", "master"]
+    branches: ["main"]
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest # This uses GitHub's flawless Linux servers!
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
 
     steps:
-      # 1. Grab your code from the repository
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      # 2. Boot up Docker Compose on the cloud server
-      - name: Start Docker Environment
-        run: docker compose up -d --build
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
 
-      # 3. Verify the containers are running successfully
-      - name: Check Container Status
-        run: docker ps -a
+      - name: Install Backend Dependencies
+        run: cd server && npm ci
 
-      # 4. View the logs to prove MongoDB and Node connected
-      - name: Display Backend Logs
-        run: docker compose logs api
+      - name: Install Frontend Dependencies
+        run: cd client && npm ci
+
+      - name: Build React Application
+        run: cd client && npm run build
+
+      - name: Output Production Artifacts
+        run: echo "Build successful. Ready for Docker containerization."

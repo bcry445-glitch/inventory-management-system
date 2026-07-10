@@ -1,8 +1,7 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
-const cookieParser = require('cookie-parser');
+const mongoose = require('mongoose');
 
 // Load env vars
 dotenv.config();
@@ -10,36 +9,40 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(express.json());
-app.use(cookieParser());
-app.use(cors({
-    origin: 'http://localhost:3000',
-    credentials: true
-}));
+app.use(express.json()); // Parses incoming JSON
+app.use(cors());         // Allows your React app to talk to the backend
 
-// Route Files
-const auth = require('./routes/authRoutes');
-const orders = require('./routes/orderRoutes');
-const products = require('./routes/productRoutes');   // Add this
-const dashboard = require('./routes/dashboardRoutes'); // Add this
-
-app.use('/api/auth', auth);
-app.use('/api/orders', orders);
-app.use('/api/products', products);     // Add this
-app.use('/api/dashboard', dashboard);   // Add this
-
-// Basic API Health Route
-app.get('/api/health', (req, res) => {
-    res.status(200).json({ status: 'success', message: 'API is running perfectly' });
-});
-
-// Database Connection
+// Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('MongoDB Connected successfully'))
-    .catch((err) => console.log('MongoDB connection error: ', err));
+    .then(() => {
+        console.log('MongoDB Connected successfully');
+    }).catch((err) => {
+        console.log('MongoDB Connection Error: ', err.message);
+    });
+
+// Import Routes
+const authRoutes = require('./routes/authRoutes');
+const productRoutes = require('./routes/productRoutes');
+const orderRoutes = require('./routes/orderRoutes'); // Added Order Routes
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger.json');
+
+// Add this right above your routes
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// Mount Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes); // Mounted Order Routes
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({
+        success: false,
+        message: err.message || 'Server Error'
+    });
+});
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running in development mode on port ${PORT}`));
