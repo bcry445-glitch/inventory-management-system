@@ -4,6 +4,11 @@
 **Developer:** Muhammad Fazeel Khan  
 **Version:** 1.0.0
 
+## Live Deployment URLs
+
+- **Frontend Application (Vercel):** https://inventory-management-system-blond-seven.vercel.app
+- **Backend API Docs (Render/Swagger):** https://inventory-management-system-bin9.onrender.com/api-docs
+
 ## 📖 Project Overview
 
 A scalable, enterprise-grade MERN stack web application designed to manage multi-branch inventory, supplier data, and customer orders. Features include real-time stock deductions, JWT role-based authentication, and a data-driven metrics dashboard.
