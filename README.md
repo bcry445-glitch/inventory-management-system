@@ -1,6 +1,5 @@
 # Enterprise Inventory & Order Management System
 
-**Client:** Allied Software Engineers  
 **Developer:** Muhammad Fazeel Khan  
 **Version:** 1.0.0
 
