@@ -1,14 +1,36 @@
 import React, { useState } from 'react';
 import { Package, Mail, Lock, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Login = () => {
-  // KEEP YOUR EXISTING STATE AND HANDLESUBMIT LOGIC HERE
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Your existing login logic
+    setError(''); // Clear any previous errors
+
+    try {
+      // Send the login request to your live Render API
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, {
+        email,
+        password
+      });
+
+      // Save the secure JWT token to the browser
+      localStorage.setItem('token', response.data.token);
+      
+      // Success! Redirect the user to the Dashboard
+      navigate('/'); 
+      
+    } catch (err) {
+      console.error("Login Error:", err);
+      // Display the error message from the backend, or a default message
+      setError(err.response?.data?.message || 'Invalid email or password. Please try again.');
+    }
   };
 
   return (
@@ -24,14 +46,20 @@ const Login = () => {
       <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-2xl shadow-2xl w-full max-w-md relative z-10">
         
         {/* Header/Logo */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-8">
           <div className="bg-blue-600 w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
             <Package className="w-8 h-8 text-white" />
           </div>
-          {/* REPLACE 'Nexus Enterprise' WITH YOUR CHOSEN NAME */}
           <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Nexus Enterprise</h1>
           <p className="text-blue-200/80 text-sm">Sign in to manage your inventory</p>
         </div>
+
+        {/* Error Message Display */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl flex items-center text-red-200 text-sm">
+            {error}
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -48,7 +76,7 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="block w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                placeholder="admin@example.com"
+                placeholder="manager@allied.com"
               />
             </div>
           </div>
