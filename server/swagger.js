@@ -13,7 +13,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'https://inventory-management-system-bin9.onrender.com/api',
+        url: 'https://inventory-management-system-1-6tuq.onrender.com/api',
         description: 'Production Server',
       },
       {
