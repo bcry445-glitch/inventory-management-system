@@ -14,11 +14,11 @@ const Inventory = () => {
     sku: '',
     category: '',
     quantity: '',
-    minStockLevel: '10', // NEW
+    minStockLevel: '10', 
     sellingPrice: '',
     purchasePrice: '',
     supplier: '',
-    image: '' // NEW
+    image: '' 
   });
 
   useEffect(() => {
@@ -28,13 +28,18 @@ const Inventory = () => {
   const fetchProducts = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('/api/products', {
+      // FIXED: Added the environment variable to point to your Render backend
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/products`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setProducts(response.data.data);
+      
+      // FIXED: Added fallback to ensure products is ALWAYS an array to prevent .map crashes
+      const fetchedProducts = response.data.data || response.data || [];
+      setProducts(Array.isArray(fetchedProducts) ? fetchedProducts : []);
       setLoading(false);
     } catch (err) {
-      console.error("Failed to fetch products");
+      console.error("Failed to fetch products:", err);
+      setProducts([]); // Failsafe
       setLoading(false);
     }
   };
@@ -55,11 +60,13 @@ const Inventory = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('/api/products', formData, {
+      // FIXED: Added the environment variable to point to your Render backend
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/products`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      setProducts([response.data.data, ...products]);
+      const newProduct = response.data.data || response.data;
+      setProducts([newProduct, ...products]);
       setIsModalOpen(false);
       setFormData({ name: '', sku: '', category: '', quantity: '', minStockLevel: '10', sellingPrice: '', purchasePrice: '', supplier: '', image: '' });
       
@@ -106,8 +113,10 @@ const Inventory = () => {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr><td colSpan="6" className="text-center py-8 text-gray-500">Loading products...</td></tr>
+              ) : products.length === 0 ? (
+                <tr><td colSpan="6" className="text-center py-8 text-gray-500">No products found. Add your first item!</td></tr>
               ) : products.map((product) => (
-                <tr key={product._id} className="hover:bg-gray-50 transition-colors">
+                <tr key={product._id || Math.random()} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
                     {product.image && product.image !== 'default-product.png' ? (
                       <img src={product.image} alt={product.name} className="w-10 h-10 rounded object-cover border border-gray-200" />
@@ -116,7 +125,7 @@ const Inventory = () => {
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-xs font-mono text-blue-600 font-medium mb-1">{product.productCode || 'Pending'}</p>
+                    <p className="text-xs font-mono text-blue-600 font-medium mb-1">{product.productCode || product.sku || 'Pending'}</p>
                     <p className="text-sm font-semibold text-gray-800">{product.name}</p>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">{product.category}</td>
@@ -124,7 +133,7 @@ const Inventory = () => {
                     <span className="font-medium text-gray-700">{product.quantity}</span> 
                     <span className="text-gray-400 text-xs ml-1">/ {product.minStockLevel}</span>
                   </td>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-700">${Number(product.sellingPrice).toFixed(2)}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-gray-700">${Number(product.sellingPrice || 0).toFixed(2)}</td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadge(product.quantity, product.minStockLevel)}`}>
                       {product.quantity === 0 ? 'Out of Stock' : product.quantity < product.minStockLevel ? 'Low Stock' : 'In Stock'}
