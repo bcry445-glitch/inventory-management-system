@@ -19,27 +19,36 @@ const Orders = () => {
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const headers = { Authorization: `Bearer ${token}` };
-        
-        const [ordersRes, productsRes] = await Promise.all([
-          axios.get('/api/orders', { headers }),
-          axios.get('/api/products', { headers })
-        ]);
-        
-        setOrders(ordersRes.data.data);
-        // Only show products that are actually in stock for the dropdown
-        setProducts(productsRes.data.data.filter(p => p.quantity > 0));
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to fetch data from the server.');
-        setLoading(false);
-      }
-    };
     fetchData();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+      
+      // FIXED: Routed to Render backend
+      const [ordersRes, productsRes] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_API_URL}/orders`, { headers }),
+        axios.get(`${import.meta.env.VITE_API_URL}/products`, { headers })
+      ]);
+      
+      // FIXED: Array safety nets to prevent .map() crashes
+      const fetchedOrders = ordersRes.data.data || ordersRes.data || [];
+      const fetchedProducts = productsRes.data.data || productsRes.data || [];
+      
+      setOrders(Array.isArray(fetchedOrders) ? fetchedOrders : []);
+      // Only show products that are actually in stock for the dropdown
+      setProducts(Array.isArray(fetchedProducts) ? fetchedProducts.filter(p => p.quantity > 0) : []);
+      setLoading(false);
+    } catch (err) {
+      console.error("Failed to fetch data:", err);
+      setError('Failed to fetch data from the server.');
+      setOrders([]);
+      setProducts([]);
+      setLoading(false);
+    }
+  };
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -68,12 +77,15 @@ const Orders = () => {
         }]
       };
 
-      const response = await axios.post('/api/orders', orderPayload, {
+      // FIXED: Routed to Render backend
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/orders`, orderPayload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
+      const addedOrder = response.data.data || response.data;
+      
       // Refresh orders list and close modal
-      setOrders([response.data.data, ...orders]);
+      setOrders([addedOrder, ...orders]);
       setIsModalOpen(false);
       setNewOrder({ customerName: '', customerEmail: '', productId: '', quantity: 1 });
     } catch (err) {
@@ -126,15 +138,17 @@ const Orders = () => {
                 <tr><td colSpan="5" className="px-6 py-8 text-center text-gray-500">No orders found. Create one to get started!</td></tr>
               ) : (
                 orders.map((order) => (
-                  <tr key={order._id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={order._id || Math.random()} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <p className="text-sm font-semibold text-gray-800">{order.customerName}</p>
                       <p className="text-xs text-gray-500">{order.customerEmail}</p>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{new Date(order.orderDate).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {order.orderDate ? new Date(order.orderDate).toLocaleDateString() : 'N/A'}
+                    </td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-800">${Number(order.totalAmount || 0).toFixed(2)}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadge(order.status)}`}>{order.status}</span>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadge(order.status)}`}>{order.status || 'Pending'}</span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button className="text-gray-400 hover:text-blue-600 mx-2 transition-colors cursor-pointer"><Eye className="w-4 h-4" /></button>
