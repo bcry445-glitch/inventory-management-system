@@ -18,7 +18,8 @@ const Login = () => {
         password
       });
       localStorage.setItem('token', response.data.token);
-      navigate('/'); 
+      localStorage.setItem('user', JSON.stringify(response.data.data));
+      navigate('/');
     } catch (err) {
       console.error("Login Error:", err);
       setError(err.response?.data?.message || 'Invalid email or password.');
