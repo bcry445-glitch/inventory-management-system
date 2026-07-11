@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
+import Orders from './pages/Orders';
 
 // Security Guard: Checks if the user's browser has a saved JWT token
 const ProtectedRoute = ({ children }) => {
@@ -21,7 +22,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Default route now safely redirects directly to the Dashboard */}
+        {/* Default route safely redirects directly to the Dashboard */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         
         {/* Public Application Route */}
@@ -42,6 +43,16 @@ function App() {
           element={
             <ProtectedRoute>
               <Inventory />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* NEW: Orders Route integrated into the router */}
+        <Route 
+          path="/orders" 
+          element={
+            <ProtectedRoute>
+              <Orders />
             </ProtectedRoute>
           } 
         />

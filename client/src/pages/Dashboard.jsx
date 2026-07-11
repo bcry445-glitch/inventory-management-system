@@ -22,16 +22,19 @@ const Dashboard = () => {
         const token = localStorage.getItem('token');
         const headers = { Authorization: `Bearer ${token}` };
 
-        // Fetch both products and orders simultaneously
+        // FIXED: Pointed to the live Render backend
         const [productsRes, ordersRes] = await Promise.all([
-          axios.get('/api/products', { headers }),
-          axios.get('/api/orders', { headers })
+          axios.get(`${import.meta.env.VITE_API_URL}/products`, { headers }),
+          axios.get(`${import.meta.env.VITE_API_URL}/orders`, { headers })
         ]);
 
-        const products = productsRes.data.data;
-        const orders = ordersRes.data.data;
+        // FIXED: Array safety nets
+        const fetchedProducts = productsRes.data.data || productsRes.data || [];
+        const fetchedOrders = ordersRes.data.data || ordersRes.data || [];
+        
+        const products = Array.isArray(fetchedProducts) ? fetchedProducts : [];
+        const orders = Array.isArray(fetchedOrders) ? fetchedOrders : [];
 
-        // Calculate Metrics based on strict assignment requirements
         let lowStockCount = 0;
         let outOfStockCount = 0;
         let invValue = 0;
@@ -40,12 +43,11 @@ const Dashboard = () => {
 
         products.forEach(p => {
           if (p.quantity === 0) outOfStockCount++;
-          else if (p.quantity < 10) lowStockCount++; // Assuming < 10 is the low stock threshold
+          else if (p.quantity < (p.minStockLevel || 10)) lowStockCount++; 
           
-          invValue += (p.quantity * p.purchasePrice);
+          invValue += (p.quantity * (p.purchasePrice || 0));
           if (p.supplier) uniqueSuppliers.add(p.supplier);
 
-          // Prepare data for the chart
           if (categoryData[p.category]) {
             categoryData[p.category] += p.quantity;
           } else {
@@ -53,7 +55,6 @@ const Dashboard = () => {
           }
         });
 
-        // Format chart data for Recharts
         const formattedChartData = Object.keys(categoryData).map(key => ({
           name: key,
           stock: categoryData[key]
@@ -94,7 +95,6 @@ const Dashboard = () => {
         <p className="text-gray-500 text-sm mt-1">Real-time overview of your enterprise metrics.</p>
       </div>
 
-      {/* Top Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center">
           <div className="p-3 rounded-lg bg-blue-50 text-blue-600 mr-4">
@@ -157,7 +157,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Main Chart Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-[400px]">
         <h3 className="text-lg font-semibold text-gray-800 mb-6">Stock Volume by Category</h3>
         {chartData.length > 0 ? (
