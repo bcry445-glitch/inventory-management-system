@@ -11,41 +11,28 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Clear any previous errors
-
+    setError(''); 
     try {
-      // Send the login request to your live Render API
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, {
         email,
         password
       });
-
-      // Save the secure JWT token to the browser
       localStorage.setItem('token', response.data.token);
-      
-      // Success! Redirect the user to the Dashboard
       navigate('/'); 
-      
     } catch (err) {
       console.error("Login Error:", err);
-      // Display the error message from the backend, or a default message
-      setError(err.response?.data?.message || 'Invalid email or password. Please try again.');
+      setError(err.response?.data?.message || 'Invalid email or password.');
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
-      
-      {/* Decorative Background Elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-500/10 blur-[120px]"></div>
         <div className="absolute top-[60%] -right-[10%] w-[40%] h-[60%] rounded-full bg-indigo-500/10 blur-[100px]"></div>
       </div>
 
-      {/* Login Card */}
       <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-2xl shadow-2xl w-full max-w-md relative z-10">
-        
-        {/* Header/Logo */}
         <div className="text-center mb-8">
           <div className="bg-blue-600 w-16 h-16 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
             <Package className="w-8 h-8 text-white" />
@@ -54,16 +41,13 @@ const Login = () => {
           <p className="text-blue-200/80 text-sm">Sign in to manage your inventory</p>
         </div>
 
-        {/* Error Message Display */}
         {error && (
           <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl flex items-center text-red-200 text-sm">
             {error}
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          
           <div className="space-y-1">
             <label className="text-sm font-medium text-gray-300 ml-1">Email Address</label>
             <div className="relative">
@@ -109,7 +93,6 @@ const Login = () => {
       </div>
     </div>
   );
-}; 
-
+};
 
 export default Login;
