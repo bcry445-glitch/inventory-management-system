@@ -4,20 +4,22 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 
-// IMPORT THE NEW SWAGGER CONFIGURATION (Fixed .js extension)
+// IMPORT THE SWAGGER CONFIGURATION (Fixed .js extension)
 const swaggerDocs = require('./swagger.js'); 
 
+// ==========================================
 // IMPORT ROUTES 
-// (Ensure these file paths match your exact file names in the /routes folder)
-const authRoutes = require('./routes/auth'); // or authRoutes.js depending on your naming
-const productRoutes = require('./routes/products'); 
-const orderRoutes = require('./routes/orders');
+// 🚨 VERIFY THESE FILENAMES MATCH YOUR FOLDER EXACTLY
+// ==========================================
+const authRoutes = require('./routes/auth');       // Example: Change 'auth' to 'authRoute' if needed
+const productRoutes = require('./routes/products'); // Example: Change 'products' to 'productRoute' if needed
+const orderRoutes = require('./routes/orders');     // Example: Change 'orders' to 'orderRoutes' if needed
 
 const app = express();
 
 // MIDDLEWARE
 app.use(express.json()); // Parses incoming JSON payloads
-app.use(cors()); // Allows your Vercel frontend to communicate with Render
+app.use(cors()); // Allows your frontend to communicate with Render
 
 // SWAGGER API DOCUMENTATION ROUTE
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
