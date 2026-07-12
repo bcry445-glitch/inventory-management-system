@@ -4,16 +4,17 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 
-// IMPORT THE SWAGGER CONFIGURATION (Fixed .js extension)
+// IMPORT THE SWAGGER CONFIGURATION 
 const swaggerDocs = require('./swagger.js'); 
 
 // ==========================================
 // IMPORT ROUTES 
-// 🚨 VERIFY THESE FILENAMES MATCH YOUR FOLDER EXACTLY
+// Fixed to exactly match the files in image_9db987.png
 // ==========================================
-const authRoutes = require('./routes/auth');       // Example: Change 'auth' to 'authRoute' if needed
-const productRoutes = require('./routes/products'); // Example: Change 'products' to 'productRoute' if needed
-const orderRoutes = require('./routes/orders');     // Example: Change 'orders' to 'orderRoutes' if needed
+const authRoutes = require('./routes/authRoutes');
+const productRoutes = require('./routes/productRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes'); // Added this since it is in your folder!
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/dashboard', dashboardRoutes); // Maps your dashboard routes
 
 // ROOT HEALTH CHECK
 app.get('/', (req, res) => {
